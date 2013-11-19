@@ -69,3 +69,5 @@
 /AndroidRankCloud/bin/resources.ap_
 /AndroidRankCloud/gen/com/example/androidrank/BuildConfig.java
 /AndroidRankCloud/gen/com/example/androidrank/R.java
+gen
+/AndroidRankLib/bin/
