@@ -1,0 +1,97 @@
+<manifest>
+
+<applications open="true">
+	</applications>
+
+
+	<tactics numForMoblieRank="1" numForWifiRank="3">
+
+		<market name="百度移动市场" numForMoblieRank="1" numForWifiRank="2"
+			open="true" priority="1">
+
+	        <app package="com.blsm.sft" priority="1" />
+
+			<app package="com.blsm.mm" priority="1" />
+
+			<app package="com.blsm.qqcs" priority="1" />
+
+			<app package="com.blsm.khl" priority="1" />
+
+			<app package="com.blsm.nxm" priority="1" />
+
+			<app package="cn.shuangshuangfei" priority="2" />
+
+			<app package="cn.xianglianai" priority="2" />
+
+		</market>
+
+
+		<market name="安卓市场" numForMoblieRank="1" numForWifiRank="2"
+			open="true" priority="3">
+
+			<app package="com.blsm.sft" priority="1" />
+
+			<app package="com.blsm.mm" priority="1" />
+
+			<app package="cn.shuangshuangfei" priority="1" /> 
+
+			<app package="cn.xianglianai" priority="1" />
+
+		</market>
+
+		<market name="华为智汇云" numForMoblieRank="3" numForWifiRank="5"
+			open="true" priority="1">
+
+			<app package="com.blsm.khl" priority="1" />
+
+			<app package="com.blsm.mm" priority="1" />
+		</market>
+
+	</tactics>
+
+	<!-- 配置参数 -->
+	<params>
+
+		<market name="百度移动市场">
+
+			<app keyword="爽翻天|成人之美|成人|情趣" package="com.blsm.sft" scoreParams="pid=108168&amp;gid=1005853&amp;docid=3129264&amp;s=100"/>
+
+			<app keyword="秘蜜|秘蜜情趣|情趣" package="com.blsm.mm" scoreParams="pid=160427&amp;gid=1006128&amp;docid=3175060&amp;s=100" />
+
+			<app keyword="成人 幸福" package="com.blsm.qqcs" scoreParams="pid=292340&amp;gid=1005392&amp;docid=3127933&amp;s=100" />
+
+			<app keyword="快活林|快活" package="com.blsm.khl" scoreParams="pid=328292&amp;gid=1006116&amp;docid=3175028&amp;s=100"/>
+
+			<app keyword="美色" package="com.blsm.nxm" scoreParams="pid=512830&amp;gid=1028962&amp;docid=3177089&amp;s=100" />
+
+		    <app keyword="找对象|对象" package="cn.shuangshuangfei" scoreParams="pid=372637&amp;gid=1029640&amp;docid=3179477&amp;s=100" />
+
+			<app keyword="想恋爱|恋爱" package="cn.xianglianai" scoreParams="pid=346711&amp;gid=1021672&amp;docid=3163146&amp;s=100" />
+			
+		</market>
+
+		<market name="安卓市场">
+            
+			<app header_ts="7" keyword="兴致勃勃|兴致|勃勃" package="com.blsm.sft"
+				sign="918aecdbb4d32e6137712c31c21d21e5&amp;lowapkmd5=null&amp;type=1&amp;source=26" />
+			
+			<app header_ts="4" keyword="秘蜜" package="com.blsm.mm"
+				sign="ff62bfbc5c84fc92d0d994b21e89af29&amp;lowapkmd5=null&amp;type=1&amp;source=26" />
+
+			<app header_ts="7" keyword="找对象|对象|婚介|婚介交友" package="cn.shuangshuangfei"
+				sign="918aecdbb4d32e6137712c31c21d21e5&amp;lowapkmd5=null&amp;type=1&amp;source=26" />
+
+			<app header_ts="7" keyword="想恋爱|婚恋交友" package="cn.xianglianai"
+				sign="918aecdbb4d32e6137712c31c21d21e5&amp;lowapkmd5=null&amp;type=1&amp;source=26" />
+		</market>
+
+		<market name="华为智汇云">
+
+			<app keyword="快活林" package="com.blsm.khl"/>
+
+			<app keyword="秘蜜" package="com.blsm.mm" />
+		</market>
+	</params>
+
+
+</manifest>
