@@ -60,6 +60,7 @@ abstract class Market {
 		marketClassMap.put(MARKET_COOLSMART, MarketCoolSmart.class);
 		marketClassMap.put(MARKET_ZTE, MarketZTE.class);
 		marketClassMap.put(MARKET_SOHU, MarketSohu.class);
+		marketClassMap.put(MARKET_SOGOU, MarketSogou.class);
 	}
 
 	public Market() {

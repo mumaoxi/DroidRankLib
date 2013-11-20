@@ -22,7 +22,7 @@ class ConfigUtils {
 			List<Attribute> market_attr, HashMap<String, String> params) {
 		try {
 			try {
-//				MLog.v("getMarket:" + marketName);
+				MLog.v("getMarket:" + marketName);
 //				MLog.i("classMap:" + Market.marketClassMap);
 				Market market = (Market) Market.marketClassMap.get(marketName)
 						.newInstance();
