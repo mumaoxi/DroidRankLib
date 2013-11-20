@@ -22,8 +22,6 @@ class ConfigUtils {
 			List<Attribute> market_attr, HashMap<String, String> params) {
 		try {
 			try {
-//				MLog.v("getMarket:" + marketName);
-//				MLog.i("classMap:" + Market.marketClassMap);
 				Market market = (Market) Market.marketClassMap.get(marketName)
 						.newInstance();
 				market.MARKET_NAME = marketName;
@@ -60,7 +58,7 @@ class ConfigUtils {
 	 */
 	protected static Market getAMarketAppToRank(Context context, String prams) {
 		try {
-			MLog.d("==getAMarketAppToRank");
+			MLog.d("====getAMarketAppToRank====");
 			SAXReader saxReader = new SAXReader();
 			Document document = saxReader.read(new ByteArrayInputStream(prams
 					.getBytes("utf-8")));
@@ -83,7 +81,6 @@ class ConfigUtils {
 						.attributes(market_ele);
 				HashMap<String, String> params = new HashMap<String, String>();
 				Market market = getMarket(marketName, market_attr, params);
-				// TODO:
 				// 如果市场不存在，跳过本次循环
 				if (market == null) {
 					MLog.w("market is null continue");
@@ -100,6 +97,7 @@ class ConfigUtils {
 					continue;
 				}
 				for (Element app_ele : appElements) {
+					params.clear();
 					market = getMarket(marketName, market_attr, params);
 					// app 的包名
 					String packageName = ElementUtils.getInstance()

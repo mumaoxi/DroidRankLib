@@ -13,9 +13,6 @@ import android.util.Base64;
 abstract class Market {
 	protected String[] appKeywords = { u.DEFAULT_KEYWORD };
 	protected static final String PREFNAME = ".umeng";
-//	protected static final String PREFNAME_CALCULATE = ".umeng_rank_markets_cal";
-//	protected static final String PREFNAME_CONTROL = "umeng_rank_markets_control";
-//	protected static final String UMENG_ONLINE_PARAM_NAME = "rank_market_app";
 
 	protected String MARKET_NAME = "Market";
 	protected String PACKAGE_NAME = "PackageName";

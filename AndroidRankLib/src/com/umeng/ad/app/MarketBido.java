@@ -92,18 +92,19 @@ class MarketBido extends Market {
 				+ ") AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
 
 		// 输出刷排名的方式，关键字、或者分类浏览
-		String rankType = params.get("rankType");
+		String rankType = params.get("a_rankType");
 		MLog.i("keyword:" + appKeywords);
-		MLog.i(" params:" + params);
+		MLog.v("rankType:" + rankType);
 		MLog.i(MARKET_NAME + PACKAGE_NAME + " rankType:" + rankType);
 
 		JSONObject jsonObject = null;
 		if ("category".equals(rankType)) {
 			jsonObject = new JSONObject();
-			jsonObject.put("data_tj", params.get("tj"));
-			jsonObject.put("apk_url", params.get("apk_url"));
+			jsonObject.put("data_tj", params.get("a_tj"));
+			jsonObject.put("apk_url", params.get("a_apk_url"));
 		} else {
-			jsonObject = this.searchAPP(searchURL.toString(), u.getInstance().getAgent(0));
+			jsonObject = this.searchAPP(searchURL.toString(), u.getInstance()
+					.getAgent(0));
 			MLog.i("$searchAPP result$" + jsonObject);
 		}
 
@@ -311,7 +312,6 @@ class MarketBido extends Market {
 		return false;
 	}
 
-
 	private JSONObject searchAPP(String url, String agent) {
 		try {
 			HttpGet httpPost = new HttpGet(url);
@@ -349,7 +349,6 @@ class MarketBido extends Market {
 			int code = response.getStatusLine().getStatusCode();
 			MLog.i("searchAPP=>status_code:" + code);
 
-			
 			String body = u.readContentFromHttpResponse(response, "utf-8");
 			MLog.d("searchApp body:" + body);
 			JSONObject o = new JSONObject();
@@ -368,7 +367,7 @@ class MarketBido extends Market {
 
 			}
 			return o;
-		
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
