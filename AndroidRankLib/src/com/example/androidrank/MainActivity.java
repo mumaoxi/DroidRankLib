@@ -1,19 +1,11 @@
 package com.example.androidrank;
 
-import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-import java.util.Set;
-
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
-import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;

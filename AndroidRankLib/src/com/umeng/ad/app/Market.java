@@ -129,7 +129,7 @@ abstract class Market {
 		Editor editor = sp.edit();
 		editor.putInt(rankCountKey, (downloadCount + 1));
 		editor.commit();
-		MLog.v("Save data " + rankCountKey + "=>" + (downloadCount + 1));
+		MLog.v("Save data  " + rankCountKey + "=>" + (downloadCount + 1));
 
 		/**
 		 * Umeng online params analysis

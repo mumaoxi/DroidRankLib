@@ -18,11 +18,13 @@ import com.umeng.ad.app.utils.SAXReader;
 
 class ConfigUtils {
 
-	private static Market getMarket(String marketName,List<Attribute> market_attr,HashMap<String,String> params){
+	private static Market getMarket(String marketName,
+			List<Attribute> market_attr, HashMap<String, String> params) {
 		try {
 			try {
-				Market
-				market = (Market) Market.marketClassMap.get(marketName)
+//				MLog.v("getMarket:" + marketName);
+//				MLog.i("classMap:" + Market.marketClassMap);
+				Market market = (Market) Market.marketClassMap.get(marketName)
 						.newInstance();
 				market.MARKET_NAME = marketName;
 				for (Attribute attribute : market_attr) {
@@ -39,13 +41,16 @@ class ConfigUtils {
 				market.params = params;
 				return market;
 			} catch (Exception e) {
+				MLog.e("getMarket:" + e.getMessage());
 				e.printStackTrace();
 			}
 		} catch (Exception e) {
+			MLog.e("getMarket2:" + e.getMessage());
 			e.printStackTrace();
 		}
 		return null;
 	}
+
 	/**
 	 * 获取到一个可以
 	 * 
@@ -78,7 +83,7 @@ class ConfigUtils {
 						.attributes(market_ele);
 				HashMap<String, String> params = new HashMap<String, String>();
 				Market market = getMarket(marketName, market_attr, params);
-				//TODO:
+				// TODO:
 				// 如果市场不存在，跳过本次循环
 				if (market == null) {
 					MLog.w("market is null continue");
@@ -149,7 +154,6 @@ class ConfigUtils {
 					markets.add(market);
 				}// 结束for循环
 
-				
 			}// 结束 分析每一个market
 
 			/**
@@ -158,17 +162,16 @@ class ConfigUtils {
 			if (markets.size() < 1) {
 				return null;
 			}
-			int random = (int)((Math.random()) * markets.size());
+			int random = (int) ((Math.random()) * markets.size());
 			Market m = markets.get(random);
-			MLog.i("avaliable size "+markets.size()+" random:"+random+" market:" + m);
+			MLog.i("avaliable size " + markets.size() + " random:" + random
+					+ " market:" + m);
 			return m;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-
-	
 
 	/**
 	 * cut params with seperator '|'
