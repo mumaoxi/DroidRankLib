@@ -21,7 +21,7 @@ class MarketSogou extends Market {
 
 	public MarketSogou() {
 	}
-	
+
 	public MarketSogou(String packageName) {
 		MARKET_NAME = MARKET_SOGOU;
 		setPackageName(packageName);
@@ -38,10 +38,9 @@ class MarketSogou extends Market {
 	 */
 	private boolean getAnalysis() {
 		try {
-			String url = String
-					.format("http://app.sohu.com/jump/file/?fileid=%1$s&pagemid=0&site=web",
-							APP_ID);
-			MLog.v(MARKET_NAME+":"+url);
+			String url = "http://mobile.zhushou.sogou.com/android/download.html?app_id="
+					+ APP_ID;
+			MLog.v(MARKET_NAME + ":" + url);
 			HttpGet httpGet = new HttpGet(url);
 			/**
 			 * HttpClient
@@ -55,7 +54,6 @@ class MarketSogou extends Market {
 					.setSoTimeout(params, 10 * TimeExtra.ONE_SECOND);
 			HttpConnectionParams.setSocketBufferSize(params, 8192);
 			HttpClientParams.setRedirecting(params, false);
-			HttpProtocolParams.setUserAgent(params, u.randomAgent());
 			client.setParams(params);
 
 			/**
@@ -66,9 +64,9 @@ class MarketSogou extends Market {
 			int code = response.getStatusLine().getStatusCode();
 			MLog.i("Sohu getAnalysis=>status_code:" + code);
 
-			String body = u.readContentFromHttpResponse(response,HTTP.UTF_8);
+			String body = u.readContentFromHttpResponse(response, HTTP.UTF_8);
 			MLog.i("body:" + body);
-			if (code==HttpStatus.SC_MOVED_TEMPORARILY) {
+			if (code == HttpStatus.SC_MOVED_TEMPORARILY) {
 				return true;
 			}
 		} catch (Exception e) {
@@ -84,7 +82,7 @@ class MarketSogou extends Market {
 	public void setAPP_ID(String aPP_ID) {
 		APP_ID = aPP_ID;
 	}
-	
+
 	@Override
 	protected void initAllParams() {
 		try {
