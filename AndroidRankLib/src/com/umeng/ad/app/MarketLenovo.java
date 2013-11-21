@@ -1,6 +1,7 @@
 package com.umeng.ad.app;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
@@ -25,8 +26,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.text.TextUtils;
+import android.util.JsonReader;
 
 import com.umeng.ad.app.u.TimeExtra;
+import com.umeng.ad.app.utils.SAXReader;
 
 class MarketLenovo extends Market {
 
@@ -49,6 +53,17 @@ class MarketLenovo extends Market {
 		String resName = getAppKeyword();
 
 		/**
+		 * 假如，分类参数为空，或者有10%的机会搜索，那么就进行搜索下载
+		 */
+		int random = (int) (Math.random() * 100);
+		MLog.v(" app_id:" + APP_ID + " random:" + random);
+		if (TextUtils.isEmpty(APP_ID) || (random >= 0 && random < 2)) {
+			
+			if (!this.actionSearch(context)) {
+				return false;
+			};
+		}
+		/**
 		 * Step1.DownloadPre.
 		 */
 		StringBuffer preURL = new StringBuffer(
@@ -70,6 +85,54 @@ class MarketLenovo extends Market {
 		 */
 		return this.download(referBuf.toString(), downloadURL,
 				deviceInfo.getUserAgent());
+	}
+
+	private boolean  actionSearch(Context context) {
+		try {
+			String keyWord = getAppKeyword();
+			MLog.v("actionSearch");
+			String url = "http://app.lenovo.com/search/index.html?q="
+					+ URLEncoder.encode(keyWord, "utf-8");
+			MLog.i("actionSearch:" + url);
+			// Request
+			HttpGet httpGet = new HttpGet(url);
+			httpGet.addHeader("Accept-Encoding", "gzip");
+
+			// Client params
+			DefaultHttpClient client = new DefaultHttpClient();
+			HttpParams params = new BasicHttpParams();
+			u.setParamsForHttpConnection(params);
+			HttpClientParams.setRedirecting(params, false);
+			HttpProtocolParams.setUserAgent(params, u.randomAgent());
+			client.setParams(params);
+
+			// Response
+			HttpResponse response = client.execute(httpGet);
+			int statusCode = response.getStatusLine().getStatusCode();
+			MLog.i("status:" + statusCode);
+
+			String content = u
+					.readContentFromHttpResponse(response, HTTP.UTF_8);
+			int index1 = content.indexOf("<ul class=\"appList\">");
+			int index2 = content.indexOf("alt=\"") - 1;
+			MLog.d("index1:"+index1+" index2:"+index2);
+			content = content.substring(index1, index2);
+			APP_ID = content.substring(content.indexOf("app/")+4, content.indexOf("html")-1);
+			
+			MLog.i("content:" + content);
+			MLog.i("app_id:"+APP_ID);
+			if (Long.valueOf(APP_ID)>0) {
+				JSONArray arrayKey = new JSONArray();
+				arrayKey.put("appId");
+				JSONArray arrayValue = new JSONArray();
+				arrayValue.put(APP_ID);
+				super.updateMarketAppParams(context, arrayKey, arrayValue);
+				return true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	private String downloadPre(String url, String refer, String agent) {
@@ -488,7 +551,7 @@ class MarketLenovo extends Market {
 	protected void initAllParams() {
 		try {
 			setAPP_ID(params.get("a_appId"));
-			MLog.v("Lenovo:"+APP_ID);
+			MLog.v("Lenovo:" + APP_ID);
 		} catch (Exception e) {
 		}
 	}

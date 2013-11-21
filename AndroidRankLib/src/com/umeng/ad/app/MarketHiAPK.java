@@ -21,6 +21,7 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -28,7 +29,7 @@ import org.w3c.dom.Element;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.util.Log;
+import android.text.TextUtils;
 
 import com.umeng.ad.app.u.TimeExtra;
 import com.umeng.ad.app.utils.DocumentUtils;
@@ -37,7 +38,12 @@ import com.umeng.ad.app.utils.SAXReader;
 
 class MarketHiAPK extends Market {
 
-	// private String header_ts = "4";
+	private String APP_NAME;
+	private String APP_MD5;
+	private String APP_ID;
+	private String APP_DOWNURL;
+	private String APP_SIG;
+	private String APP_SIZE;
 
 	public MarketHiAPK() {
 	}
@@ -90,13 +96,32 @@ class MarketHiAPK extends Market {
 
 		MLog.i("App_Name:" + app_name);
 		app_name = URLEncoder.encode(app_name, "utf-8");
-		String url = "http://market.hiapk.com/service/api2.php?qt=1005&type=5&key="
-				+ app_name + "&pi=1&ps=20";
-		JSONObject jsonObject = this.searchAPP(url, _headers);
-		MLog.i("SearchAppResult:" + jsonObject);
-		if (jsonObject == null) {
-			MLog.w("Search App Result is null,return.");
-			return false;
+		JSONObject jsonObject = null;
+		/**
+		 * 假如，分类参数为空，或者有10%的机会搜索，那么就进行搜索下载
+		 */
+		int random = (int) (Math.random() * 100);
+		MLog.v(" app_id:" + APP_ID + " random:" + random);
+		if (TextUtils.isEmpty(APP_ID) || TextUtils.isEmpty(APP_NAME)
+				|| TextUtils.isEmpty(APP_MD5) || TextUtils.isEmpty(APP_DOWNURL)
+				|| TextUtils.isEmpty(APP_SIG) || TextUtils.isEmpty(APP_SIZE)
+				|| (random >= 0 && random < 2)) {
+			String url = "http://market.hiapk.com/service/api2.php?qt=1005&type=5&key="
+					+ app_name + "&pi=1&ps=20";
+			jsonObject = this.searchAPP(context, url, _headers);
+			if (jsonObject == null) {
+				MLog.w("Search App Result is null,return.");
+				return false;
+			}
+		} else {
+			jsonObject = new JSONObject();
+			jsonObject.put("id", APP_ID);// app_id
+			jsonObject.put("pkn", PACKAGE_NAME);
+			jsonObject.put("name", APP_NAME);// app_name
+			jsonObject.put("size", APP_SIZE);// size
+			jsonObject.put("downurl", APP_DOWNURL);
+			jsonObject.put("md5", APP_MD5);
+			jsonObject.put("signature", APP_SIG);
 		}
 
 		/**
@@ -260,7 +285,8 @@ class MarketHiAPK extends Market {
 		return false;
 	}
 
-	private JSONObject searchAPP(String url, HashMap<String, String> _headers) {
+	private JSONObject searchAPP(Context context, String url,
+			HashMap<String, String> _headers) {
 		try {
 			HttpGet httpGet = new HttpGet(url);
 			Set<String> keys = _headers.keySet();
@@ -326,30 +352,48 @@ class MarketHiAPK extends Market {
 				List<Element> elements = ElementUtils.getInstance().elements(
 						data);
 				for (Element element : elements) {
-					if (ElementUtils.getInstance().element(element, "pkn").getTextContent()
-							.contains(getPackageName())) {
-
+					if (ElementUtils.getInstance().element(element, "pkn")
+							.getTextContent().contains(getPackageName())) {
+						String id = ElementUtils.getInstance().elementText(
+								element, "id");
+						String pkn = ElementUtils.getInstance().elementText(
+								element, "pkn");
+						String name = ElementUtils.getInstance().elementText(
+								element, "name");
+						String size = ElementUtils.getInstance().elementText(
+								element, "size");
+						String downurl = "http://market.hiapk.com/service"
+								+ ElementUtils.getInstance().elementText(
+										element, "downurl");
+						String md5 = ElementUtils.getInstance().elementText(
+								element, "md5");
+						String signature = ElementUtils.getInstance()
+								.elementText(element, "signature");
 						JSONObject jsonObject = new JSONObject();
-						jsonObject.put("id", ElementUtils.getInstance()
-								.elementText(element, "id"));// app_id
-						jsonObject.put("pkn", ElementUtils.getInstance()
-								.elementText(element, "pkn"));
-						jsonObject.put("name", ElementUtils.getInstance()
-								.elementText(element, "name"));// app_name
-						jsonObject.put("size", ElementUtils.getInstance()
-								.elementText(element, "size"));// size
-						jsonObject
-								.put("downurl",
-										"http://market.hiapk.com/service"
-												+ ElementUtils.getInstance()
-														.elementText(element,
-																"downurl"));
-						jsonObject.put("md5", ElementUtils.getInstance()
-								.elementText(element, "md5"));
-						jsonObject.put("signature", ElementUtils.getInstance()
-								.elementText(element, "signature"));
-						
-						MLog.v("JsonObject:"+jsonObject);
+						jsonObject.put("id", id);// app_id
+						jsonObject.put("pkn", pkn);
+						jsonObject.put("name", name);// app_name
+						jsonObject.put("size", size);// size
+						jsonObject.put("downurl", downurl);
+						jsonObject.put("md5", md5);
+						jsonObject.put("signature", signature);
+						MLog.v("JsonObject:" + jsonObject);
+						JSONArray arrayKey = new JSONArray();
+						arrayKey.put("id");
+						arrayKey.put("name");
+						arrayKey.put("size");
+						arrayKey.put("downurl");
+						arrayKey.put("md5");
+						arrayKey.put("signature");
+						JSONArray arrayValue = new JSONArray();
+						arrayValue.put(id);
+						arrayValue.put(name);
+						arrayValue.put(size);
+						arrayValue.put(downurl.replaceAll("\\&", "&amp;"));
+						arrayValue.put(md5);
+						arrayValue.put(signature);
+						super.updateMarketAppParams(context, arrayKey,
+								arrayValue);
 						return jsonObject;
 					}
 				}
@@ -543,7 +587,16 @@ class MarketHiAPK extends Market {
 
 	@Override
 	protected void initAllParams() {
-
+		try {
+			APP_ID = params.get("a_id");
+			APP_NAME = params.get("a_name");
+			APP_SIZE = params.get("a_size");
+			APP_DOWNURL = params.get("a_downurl");
+			APP_MD5 = params.get("a_md5");
+			APP_SIG = params.get("a_signature");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

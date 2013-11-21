@@ -703,7 +703,7 @@ class u {
 			return "搜狐应用中心";
 		}
 		if (serial == 18) {
-			return "搜狗市场";
+			return "搜狗手机助手";
 		}
 		return "百度移动市场";
 	}

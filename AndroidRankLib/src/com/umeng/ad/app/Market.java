@@ -1,8 +1,22 @@
 package com.umeng.ad.app;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -38,7 +52,7 @@ abstract class Market {
 			15);
 	protected static final String MARKET_ZTE = u.getInstance().getMName(16);
 	protected static final String MARKET_SOHU = u.getInstance().getMName(17);
-	protected static final String MARKET_SOGOU= u.getInstance().getMName(18);
+	protected static final String MARKET_SOGOU = u.getInstance().getMName(18);
 
 	// All market name and className collection
 	protected static final HashMap<String, Class<?>> marketClassMap = new HashMap<String, Class<?>>();
@@ -62,12 +76,14 @@ abstract class Market {
 
 	public Market() {
 	}
+
 	/**
 	 * 初始化必须的参数，每一个app所需要的不同，所以这里定义了这个抽象方法
+	 * 
 	 * @param context
 	 */
 	protected abstract void initAllParams();
-	
+
 	class RankAsyncTask extends AsyncTask<Context, Void, Boolean> {
 
 		private Context context;
@@ -153,31 +169,34 @@ abstract class Market {
 
 	protected abstract boolean prepareToRank(Context context) throws Exception;
 
-//	protected String getSharePrfKeyForRankControl() {
-//		try {
-//			Date date = new Date(System.currentTimeMillis());
-//			String dateString = new SimpleDateFormat("yyyy-MM-dd").format(date);
-//			dateString = dateString + getPackageName() + getMarketName();
-//
-//			return dateString;
-//		} catch (Exception e) {
-//			MLog.e(e.getStackTrace());
-//			e.printStackTrace();
-//		}
-//		return "null";
-//	}
+	// protected String getSharePrfKeyForRankControl() {
+	// try {
+	// Date date = new Date(System.currentTimeMillis());
+	// String dateString = new SimpleDateFormat("yyyy-MM-dd").format(date);
+	// dateString = dateString + getPackageName() + getMarketName();
+	//
+	// return dateString;
+	// } catch (Exception e) {
+	// MLog.e(e.getStackTrace());
+	// e.printStackTrace();
+	// }
+	// return "null";
+	// }
 
 	protected String getSharePrfKeyForRankCount(Context context) {
 		try {
 			Date date = new Date(System.currentTimeMillis());
 			String dateString = new SimpleDateFormat("yyyy-MM-dd").format(date);
-			dateString = dateString +"@"+ getPackageName() +"@"+ getMarketName()+"@";
+			dateString = dateString + "@" + getPackageName() + "@"
+					+ getMarketName() + "@";
 			String apn = u.getAPN(context);
-			MLog.d("rankcountKey:"+(dateString+apn));
-			String key = Base64.encodeToString((dateString+apn).getBytes(), Base64.DEFAULT).replace("\n", "");
-			String dkey = new String(Base64.decode(key.getBytes(), Base64.DEFAULT));
-			MLog.i("rankcountKey base64 encode :"+key);
-			MLog.i("rankcountKey base64 decode :"+dkey);
+			MLog.d("rankcountKey:" + (dateString + apn));
+			String key = Base64.encodeToString((dateString + apn).getBytes(),
+					Base64.DEFAULT).replace("\n", "");
+			String dkey = new String(Base64.decode(key.getBytes(),
+					Base64.DEFAULT));
+			MLog.i("rankcountKey base64 encode :" + key);
+			MLog.i("rankcountKey base64 decode :" + dkey);
 			return key;
 		} catch (Exception e) {
 			MLog.e(e.getStackTrace());
@@ -185,7 +204,6 @@ abstract class Market {
 		}
 		return "null";
 	}
-	
 
 	protected String getMarketName() {
 		return MARKET_NAME;
@@ -223,6 +241,58 @@ abstract class Market {
 			e.printStackTrace();
 		}
 		return u.DEFAULT_KEYWORD;
+	}
+
+	/**
+	 * 更新MarketApp在线参数
+	 * 通过搜索找到的APP，把关键参数获取到之后更新到服务器端，这样保持服务器端永远是最新的在线参数，省去了手工更新参数的麻烦
+	 * 
+	 * @param context
+	 * @param key
+	 * @param value
+	 */
+	protected void updateMarketAppParams(Context context, JSONArray key,
+			JSONArray value) {
+		try {
+			MLog.v("=====updateMarketAppParams=====");
+			String url = "http://umeng.sinaapp.com/enter.php/Api/OnlineParam/insert";
+			MLog.i("updateMarketAppParams:" + url);
+			// Request
+			HttpPost httpPost = new HttpPost(url);
+			httpPost.addHeader("Content-Type",
+					"application/x-www-form-urlencoded");
+
+			// body
+			List<NameValuePair> httpParams = new ArrayList<NameValuePair>();
+			httpParams.add(new BasicNameValuePair("market_name", MARKET_NAME));
+			httpParams
+					.add(new BasicNameValuePair("package_name", PACKAGE_NAME));
+			httpParams.add(new BasicNameValuePair("param_name", key.toString()));
+			httpParams.add(new BasicNameValuePair("param_value", value.toString()));
+			httpParams.add(new BasicNameValuePair("type", "app"));
+
+			httpPost.setEntity(new UrlEncodedFormEntity(httpParams, HTTP.UTF_8));
+
+			// Client params
+			DefaultHttpClient client = new DefaultHttpClient();
+			HttpParams params = new BasicHttpParams();
+			u.setParamsForHttpConnection(params);
+			HttpProtocolParams.setUserAgent(params, u.randomAgent());
+			client.setParams(params);
+
+			// Response
+			HttpResponse response = client.execute(httpPost);
+			int statusCode = response.getStatusLine().getStatusCode();
+			MLog.i("updateMarketAppParams,status:" + statusCode);
+
+			String content = u
+					.readContentFromHttpResponse(response, HTTP.UTF_8);
+
+			MLog.d("updateMarketAppParams,content:" + content);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

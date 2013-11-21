@@ -24,6 +24,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Base64;
 
 import com.umeng.ad.app.u.TimeExtra;
@@ -34,10 +35,14 @@ class MarketXiaomi extends Market {
 	private String APP_DOWNLOAD_URL = "";
 	private String APP_KEYWORD = "";
 	private String APP_VERSION_CODE;
+	private String APP_CATEGORY_ID = "";
 	private String marketVersionName;
 	private String version;
 	private String sessionId;
 	private String clientId;
+
+	// 下载方式
+	private String ref = "toplist/category/%1$s";
 
 	// from search list to app detail index
 	private int refPosition;
@@ -47,8 +52,8 @@ class MarketXiaomi extends Market {
 	private static final String ACTION_CONNECT_SERVER = "http://market.xiaomi.com/apm/user/device";
 	private static final String ACTION_GET_SUGGEST = "http://58.68.235.171/apm/search/suggest?clientId=%1$s&co=CN&imei=%2$s&keyword=%3$s&la=zh&os=%4$s&sdk=%5$s&session=%6$s";
 	private static final String ACTION_SEARCH = "http://58.68.235.171/apm/search?clientId=%1$s&co=CN&imei=%2$s&keyword=%3$s&la=zh&os=%4$s&page=0&ref=input&sdk=%5$s&session=%6$s";
-	private static final String ACTION_APP_DETAIL = "http://58.68.235.171/apm/app/id/%1$s?clientId=%2$s&co=CN&imei=%3$s&la=zh&os=%4$s&ref=search&refPosition=%5$s&sdk=%6$s&session=%7$s";
-	private static final String ACTION_GET_DOWNLOAD_URL = "http://58.68.235.171/apm/download/%1$s?clientId=%2$s&co=CN&imei=%3$s&la=zh&net=wifi&os=%4$s&ref=search&refPosition=%5$s&sdk=%6$s&session=%7$s&signature=%8$s";
+	private static final String ACTION_APP_DETAIL = "http://58.68.235.171/apm/app/id/%1$s?clientId=%2$s&co=CN&imei=%3$s&la=zh&os=%4$s&ref=%5$s&refPosition=%6$s&sdk=%7$s&session=%8$s";
+	private static final String ACTION_GET_DOWNLOAD_URL = "http://58.68.235.171/apm/download/%1$s?clientId=%2$s&co=CN&imei=%3$s&la=zh&net=wifi&os=%4$s&ref=%9$s&refPosition=%5$s&sdk=%6$s&session=%7$s&signature=%8$s";
 	private static final String ACTION_UPDATE_INFOV2 = "http://58.68.235.171/apm/updateinfo/v2";
 	private static final String ACTION_UPDATE_INFO = "http://58.68.235.171/apm/updateinfo";
 	private static final String DATA_UPDATE_INFO = "clientId=%1$s&co=CN&imei=%2$s&la=zh&os=%3$s&packageName=%4$s&sdk=%5$s&session=%6$s";
@@ -86,9 +91,28 @@ class MarketXiaomi extends Market {
 		APP_KEYWORD = getAppKeyword();
 		MLog.i("app_keyword:" + APP_KEYWORD);
 
+		/**
+		 * 初始化一些参数
+		 */
+		refPosition = (int) (Math.random() * 100);
 		this.action01ConnetServer(context);
-		this.action02GetSuggest();
-		this.action03Search();
+
+		/**
+		 * 假如，分类参数为空，或者有10%的机会搜索，那么就进行搜索下载
+		 */
+		int random = (int) (Math.random() * 100);
+		MLog.v("category_id:" + APP_CATEGORY_ID + " app_id:" + APP_ID
+				+ " random:" + random);
+		if (TextUtils.isEmpty(APP_CATEGORY_ID) || TextUtils.isEmpty(APP_ID)
+				|| (random >= 0 && random < 2)) {
+			this.action02GetSuggest();
+			this.action03Search(context);
+			ref = "search";
+		}
+
+		/**
+		 * 获取APP的详情，并且要下载
+		 */
 		this.action04AppDetail();
 		this.action05GetDownloadURL();
 		this.action06DownloadAPK();
@@ -187,7 +211,7 @@ class MarketXiaomi extends Market {
 		}
 	}
 
-	private void action03Search() {
+	private void action03Search(Context context) {
 		try {
 			MLog.v("action03Search");
 			String url = String.format(ACTION_SEARCH, clientId,
@@ -211,9 +235,6 @@ class MarketXiaomi extends Market {
 			int statusCode = response.getStatusLine().getStatusCode();
 			MLog.i("status:" + statusCode);
 
-			// String content = u
-			// .readContentFromHttpResponse(response, HTTP.UTF_8);
-			// MLog.i("content:" + content);
 			String content = u
 					.readContentFromHttpResponse(response, HTTP.UTF_8);
 			JSONObject object = new JSONObject(content);
@@ -224,8 +245,20 @@ class MarketXiaomi extends Market {
 					APP_ID = obj.getString("id") + "";
 					String display = obj.getString("displayName");
 					String devloper = obj.getString("publisherName");
-					MLog.i(display + ":" + APP_ID + "-" + devloper);
+					APP_CATEGORY_ID = obj.getString("level1CategoryId");
+					MLog.i(display + ":" + APP_ID + "-" + devloper
+							+ " category_id:" + APP_CATEGORY_ID);
 					refPosition = i;
+					if (!TextUtils.isEmpty(APP_ID)
+							&& !TextUtils.isEmpty(APP_CATEGORY_ID)) {
+						JSONArray keyArray = new JSONArray();
+						keyArray.put("appId");
+						keyArray.put("categoryId");
+						JSONArray valueArray = new JSONArray();
+						valueArray.put(APP_ID);
+						valueArray.put(APP_CATEGORY_ID);
+						super.updateMarketAppParams(context, keyArray,valueArray);
+					}
 					break;
 				}
 			}
@@ -238,8 +271,10 @@ class MarketXiaomi extends Market {
 		try {
 			MLog.v("action04AppDetail");
 			String url = String.format(ACTION_APP_DETAIL, APP_ID, clientId,
-					MD5Utils.string2MD5(deviceInfo.imei), refPosition, version,
-					deviceInfo.verCode, sessionId);
+					MD5Utils.string2MD5(deviceInfo.imei), version, URLEncoder
+							.encode(String.format(ref, APP_CATEGORY_ID),
+									"utf-8"), refPosition, deviceInfo.verCode,
+					sessionId);
 			MLog.i("action04AppDetail:" + url);
 			// Request
 			HttpGet httpGet = new HttpGet(url);
@@ -277,9 +312,10 @@ class MarketXiaomi extends Market {
 					+ "/" + u.generateRandCharNum(1) + "=";
 			MLog.v("action05GetDownloadURL");
 			String url = String.format(ACTION_GET_DOWNLOAD_URL, APP_ID,
-					clientId, MD5Utils.string2MD5(deviceInfo.imei),
-					refPosition, version, deviceInfo.verCode, sessionId,
-					URLEncoder.encode(signature, "UTF-8"));
+					clientId, MD5Utils.string2MD5(deviceInfo.imei), version,
+					refPosition, deviceInfo.verCode, sessionId, URLEncoder
+							.encode(signature, "UTF-8"), URLEncoder.encode(
+							String.format(ref, APP_CATEGORY_ID), "utf-8"));
 			MLog.i("action05GetDownloadURL:" + url);
 
 			// Request
@@ -494,6 +530,8 @@ class MarketXiaomi extends Market {
 		try {
 			setMarketVersionName(params.get("m_marketVersionName"));
 			setVersion(params.get("m_version"));
+			APP_CATEGORY_ID = (params.get("a_categoryId"));
+			APP_ID = (params.get("a_appId"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

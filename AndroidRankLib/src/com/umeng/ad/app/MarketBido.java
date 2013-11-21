@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.util.Arrays;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -21,10 +22,13 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 class MarketBido extends Market {
 
 	private String scoreParms;
+	private String tj;
+	private String apk_url;
 
 	public MarketBido() {
 	}
@@ -92,20 +96,22 @@ class MarketBido extends Market {
 				+ ") AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
 
 		// 输出刷排名的方式，关键字、或者分类浏览
-		String rankType = params.get("a_rankType");
-		MLog.i("keyword:" + appKeywords);
-		MLog.v("rankType:" + rankType);
-		MLog.i(MARKET_NAME + PACKAGE_NAME + " rankType:" + rankType);
+		MLog.d("keyword:" + Arrays.toString(appKeywords));
 
 		JSONObject jsonObject = null;
-		if ("category".equals(rankType)) {
-			jsonObject = new JSONObject();
-			jsonObject.put("data_tj", params.get("a_tj"));
-			jsonObject.put("apk_url", params.get("a_apk_url"));
+		int random = (int) (Math.random() * 100);
+		MLog.v("baidu,+" + PACKAGE_NAME + " tj:" + tj + " apk_url:" + apk_url
+				+ " random:" + random);
+		if (TextUtils.isEmpty(tj) || TextUtils.isEmpty(apk_url)
+				|| (random >= 0 && random < 2)) {
+			jsonObject = this.searchAPP(context, searchURL.toString(), u
+					.getInstance().getAgent(0));
+			MLog.i("Search App detail:" + jsonObject);
 		} else {
-			jsonObject = this.searchAPP(searchURL.toString(), u.getInstance()
-					.getAgent(0));
-			MLog.i("$searchAPP result$" + jsonObject);
+			jsonObject = new JSONObject();
+			jsonObject.put("data_tj", tj);
+			jsonObject.put("apk_url", apk_url);
+			MLog.i("Get App detail:" + jsonObject);
 		}
 
 		/**
@@ -135,184 +141,10 @@ class MarketBido extends Market {
 		boolean downloadOk = this.download(downloadURL, range + "-"
 				+ (range + 2), context);
 
-		if (System.currentTimeMillis() % 5 == 0) {
-			try {
-				JSONObject object = autoVote360Pre(
-						"http://umeng.sinaapp.com/enter.php/Admin/AutoVote360/auto360Score",
-						agent);
-				if (object != null) {
-					String referer = "http://zhushou.360.cn/detail/index/soft_id/"
-							+ object.getString("app_id")
-							+ "?recrefer=SE_D_"
-							+ URLEncoder.encode(object.getString("app_name"),
-									"utf-8");
-					boolean re = autoVote3602(object.getString("url"), referer,
-							agent);
-					if (re) {
-						autoVote3603(
-								"http://umeng.sinaapp.com/enter.php/Admin/AutoVote360/auto360ScoreAfter?package="
-										+ object.getString("package")
-										+ "&expect_count="
-										+ object.getString("expect_count"),
-								agent);
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 		return downloadOk;
 	}
 
-	private JSONObject autoVote360Pre(String url, String agent) {
-		try {
-			HttpGet httpPost = new HttpGet(url);
-			httpPost.addHeader("User-Agent", agent);
-			/**
-			 * Logger.i(this,curlString);
-			 */
-			StringBuffer curlString = new StringBuffer("curl ");
-			Header[] headers = httpPost.getAllHeaders();
-			for (Header header : headers) {
-				curlString.append("-H '" + header.getName() + ": "
-						+ header.getValue() + "' ");
-			}
-			curlString.append("-A '" + agent + "' ");
-			curlString.append(url);
-			MLog.i("--autoVote360--\n" + url);
-
-			/**
-			 * HttpClient
-			 */
-			DefaultHttpClient client = new DefaultHttpClient();
-			HttpParams params = new BasicHttpParams();
-
-			HttpConnectionParams.setConnectionTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSoTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSocketBufferSize(params, 8192);
-			HttpClientParams.setRedirecting(params, true);
-			HttpProtocolParams.setUserAgent(params, agent);
-			client.setParams(params);
-			/**
-			 * Execute post
-			 */
-			HttpResponse response = client.execute(httpPost);
-
-			int code = response.getStatusLine().getStatusCode();
-			MLog.i("autoVote360=>status_code:" + code);
-
-			String body = u.readContentFromHttpResponse(response, "utf-8");
-			MLog.d("autoVote360 body:" + body);
-
-			return new JSONObject(body);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	private boolean autoVote3602(String url, String referer, String agent) {
-		try {
-			HttpGet httpPost = new HttpGet(url);
-			httpPost.addHeader("User-Agent", agent);
-			httpPost.addHeader("Referer", referer);
-			/**
-			 * Logger.i(this,curlString);
-			 */
-			StringBuffer curlString = new StringBuffer("curl ");
-			Header[] headers = httpPost.getAllHeaders();
-			for (Header header : headers) {
-				curlString.append("-H '" + header.getName() + ": "
-						+ header.getValue() + "' ");
-			}
-			curlString.append("-A '" + agent + "' ");
-			curlString.append(url);
-			MLog.i("--autoVote3602--\n" + url);
-
-			/**
-			 * HttpClient
-			 */
-			DefaultHttpClient client = new DefaultHttpClient();
-			HttpParams params = new BasicHttpParams();
-
-			HttpConnectionParams.setConnectionTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSoTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSocketBufferSize(params, 8192);
-			HttpClientParams.setRedirecting(params, true);
-			HttpProtocolParams.setUserAgent(params, agent);
-			client.setParams(params);
-			/**
-			 * Execute post
-			 */
-			HttpResponse response = client.execute(httpPost);
-
-			int code = response.getStatusLine().getStatusCode();
-			MLog.i("autoVote3602=>status_code:" + code);
-
-			String body = u.readContentFromHttpResponse(response, "utf-8");
-			MLog.d("autoVote3602 body:" + body);
-
-			body = body.replace("try{poll.onSuccessVote(", "");
-			body = body.replace(");}catch(e){}", "");
-			JSONObject object = new JSONObject(body);
-			if (object.getBoolean("data")) {
-				return true;
-			}
-			return false;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	private boolean autoVote3603(String url, String agent) {
-		try {
-			HttpGet httpPost = new HttpGet(url);
-			httpPost.addHeader("User-Agent", agent);
-			StringBuffer curlString = new StringBuffer("curl ");
-			Header[] headers = httpPost.getAllHeaders();
-			for (Header header : headers) {
-				curlString.append("-H '" + header.getName() + ": "
-						+ header.getValue() + "' ");
-			}
-			curlString.append("-A '" + agent + "' ");
-			curlString.append(url);
-			MLog.i("--autoVote3603--\n" + url);
-
-			/**
-			 * HttpClient
-			 */
-			DefaultHttpClient client = new DefaultHttpClient();
-			HttpParams params = new BasicHttpParams();
-
-			HttpConnectionParams.setConnectionTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSoTimeout(params, 20 * 1000);
-			HttpConnectionParams.setSocketBufferSize(params, 8192);
-			HttpClientParams.setRedirecting(params, true);
-			HttpProtocolParams.setUserAgent(params, agent);
-			client.setParams(params);
-			/**
-			 * Execute post
-			 */
-			HttpResponse response = client.execute(httpPost);
-
-			int code = response.getStatusLine().getStatusCode();
-			MLog.i("autoVote3603=>status_code:" + code);
-
-			String body = u.readContentFromHttpResponse(response, "utf-8");
-			MLog.d("autoVote3603 body:" + body);
-
-			return false;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	private JSONObject searchAPP(String url, String agent) {
+	private JSONObject searchAPP(Context context, String url, String agent) {
 		try {
 			HttpGet httpPost = new HttpGet(url);
 			httpPost.addHeader("User-Agent", agent);
@@ -358,10 +190,20 @@ class MarketBido extends Market {
 			for (int i = 0; i < array.length(); i++) {
 				JSONObject object = array.getJSONObject(i);
 				if (PACKAGE_NAME.equals(object.getString("package"))) {
+					String tj = object.getString("tj");
+					String apk_url = object.getString("download_inner");
 					o.put("pkg_name", PACKAGE_NAME);
-					o.put("apk_url", object.getString("download_inner"));
-					o.put("data_tj", object.getString("tj"));
+					o.put("apk_url", apk_url);
+					o.put("data_tj", tj);
 					o.put("detail_url", "");
+
+					JSONArray keyArray = new JSONArray();
+					keyArray.put("tj");
+					keyArray.put("apk_url");
+					JSONArray valueArray = new JSONArray();
+					valueArray.put(tj);
+					valueArray.put(apk_url);
+					super.updateMarketAppParams(context, keyArray, valueArray);
 					break;
 				}
 
@@ -563,6 +405,8 @@ class MarketBido extends Market {
 	protected void initAllParams() {
 		try {
 			setScoreParms(params.get("a_scoreParams"));
+			tj = params.get("a_tj");
+			apk_url = params.get("a_apk_url");
 		} catch (Exception e) {
 		}
 	}
