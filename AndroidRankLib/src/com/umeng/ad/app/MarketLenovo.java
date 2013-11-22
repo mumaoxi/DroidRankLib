@@ -1,7 +1,6 @@
 package com.umeng.ad.app;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
@@ -27,10 +26,8 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.JsonReader;
 
 import com.umeng.ad.app.u.TimeExtra;
-import com.umeng.ad.app.utils.SAXReader;
 
 class MarketLenovo extends Market {
 

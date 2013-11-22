@@ -14,10 +14,8 @@ public class SAXReader {
 		try {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			org.w3c.dom.Document dos = builder.parse(inputStream);
-//			MLog.v("dos:"+dos);
 			return (Document) dos;
 		} catch (Exception e) {
-//			MLog.e("sax read,exception:"+e.getMessage());
 			e.printStackTrace();
 		}
 
