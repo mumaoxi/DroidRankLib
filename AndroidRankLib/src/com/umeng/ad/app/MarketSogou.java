@@ -19,6 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.umeng.ad.app.u.TimeExtra;
 
@@ -36,6 +37,18 @@ class MarketSogou extends Market {
 
 	@Override
 	protected boolean prepareToRank(Context context) throws Exception {
+
+		/**
+		 * 假如，分类参数为空，或者有10%的机会搜索，那么就进行搜索下载
+		 */
+		String keyword = getAppKeyword();
+		int random = (int) (Math.random() * 100);
+		MLog.v("keyword:" + keyword + " app_id:" + APP_ID + " random:" + random);
+		if (TextUtils.isEmpty(APP_ID) || (random >= 0 && random < 2)) {
+			APP_ID = this.getAppId(context, keyword, PACKAGE_NAME);
+			if (TextUtils.isEmpty(APP_ID))
+				return false;
+		}
 
 		return getAnalysis();
 	}
@@ -99,15 +112,15 @@ class MarketSogou extends Market {
 		}
 	}
 
-	private String getAppId(String app_name, String packagename) {
-		String appname = URLEncoder.encode(app_name);
-		String appid = "";
-		String url = "http://mobile.zhushou.sogou.com/android/getapplist.html?f=search";
-		HttpPost httpPost = new HttpPost(url);
-		JSONObject search = new JSONObject();
-		JSONObject data = new JSONObject();
-		JSONObject limit = new JSONObject();
+	private String getAppId(Context context, String keyword, String packagename) {
 		try {
+			String appname = URLEncoder.encode(keyword, "utf-8");
+			String appid = "";
+			String url = "http://mobile.zhushou.sogou.com/android/getapplist.html?f=search";
+			HttpPost httpPost = new HttpPost(url);
+			JSONObject search = new JSONObject();
+			JSONObject data = new JSONObject();
+			JSONObject limit = new JSONObject();
 			limit.put("limit", "25");
 			limit.put("module", "search");
 			limit.put("gruopid", "mix");
@@ -118,21 +131,15 @@ class MarketSogou extends Market {
 			MLog.i("post param = " + data);
 
 			httpPost.setEntity(new StringEntity(data.toString()));
+			httpPost.setHeader("Content-Type", "text/plain; charset=utf-8");
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		httpPost.setHeader("Content-Type", "text/plain; charset=utf-8");
-
-		HttpClient client = new DefaultHttpClient();
-
-		try {
+			HttpClient client = new DefaultHttpClient();
 			HttpResponse httpResponse = client.execute(httpPost);
 			int code = httpResponse.getStatusLine().getStatusCode();
 			MLog.i("response statuc code = " + code);
 			if (code == 200) {
 				String retSrc = EntityUtils.toString(httpResponse.getEntity());
-				MLog.i("result str = " + retSrc);
+//				MLog.i("result str = " + retSrc);
 				JSONObject result = new JSONObject(retSrc);
 				JSONArray list = result.getJSONObject("search")
 						.getJSONObject("mix").getJSONArray("list");
@@ -141,20 +148,26 @@ class MarketSogou extends Market {
 					if (item.getString("packagename").equalsIgnoreCase(
 							packagename)) {
 						appid = item.getString("appid");
-						MLog.i("get appid = " + appid);
-						return appid;
+						break;
 					}
 				}
 
 			} else {
 				MLog.i("request failed");
 			}
+			MLog.d("get appid = " + appid);
+			if (Long.valueOf(appid) > 0) {
+				JSONArray arrayKey = new JSONArray();
+				arrayKey.put("appId");
+				JSONArray arrayValue = new JSONArray();
+				arrayValue.put(appid);
+				super.updateMarketAppParams(context, arrayKey, arrayValue);
+			}
+			return appid;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		MLog.i("get appid = " + appid);
-		return appid;
-
+		return null;
 	}
 
 }

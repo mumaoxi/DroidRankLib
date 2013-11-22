@@ -3,7 +3,7 @@ package com.umeng.ad.app;
 import android.util.Log;
 
  class MLog {
-	protected static boolean logEnable = true;
+	protected static boolean logEnable = false;
 
 	protected static void i(Object object) {
 		if (MLog.logEnable) {
