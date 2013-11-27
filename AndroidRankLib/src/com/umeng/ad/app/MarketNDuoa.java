@@ -52,17 +52,58 @@ class MarketNDuoa extends Market {
 
 	@Override
 	protected boolean prepareToRank(Context context) throws Exception {
-		deviceInfo = new DeviceInfo(context);
-		String userAgent = u.getInstance().getAgent(
-				(int) (System.currentTimeMillis() % 14));
-		deviceInfo.setUserAgent(userAgent);
-		APP_DOWNLOAD_URL = String.format(APP_DOWNLOAD_URL, APP_ID);
-		MLog.i("app_keyword:" + getAppKeyword());
+		// deviceInfo = new DeviceInfo(context);
+		// String userAgent = u.getInstance().getAgent(
+		// (int) (System.currentTimeMillis() % 14));
+		// deviceInfo.setUserAgent(userAgent);
+		// APP_DOWNLOAD_URL = String.format(APP_DOWNLOAD_URL, APP_ID);
+		// MLog.i("app_keyword:" + getAppKeyword());
 
-		this.action01ConnetServer();
-		this.action02DownloadAPK();
+		// this.action01ConnetServer();
+		// this.action02DownloadAPK();
+		//
+		// return this.actionPostDataToServer();
+		return NduoGet(APP_ID);
 
-		return this.actionPostDataToServer();
+	}
+
+	private boolean NduoGet(String aPP_ID2) {
+		String url = "http://www.nduoa.com/apk/download/%1$s?from=ndoo";
+		url = String.format(url, aPP_ID2);
+		MLog.v("NduoGet :: url = " + url);
+
+		HttpGet httpGet = new HttpGet(url);
+		/*
+		 * set client
+		 */
+
+		DefaultHttpClient client = new DefaultHttpClient();
+		HttpParams params = new BasicHttpParams();
+
+		HttpConnectionParams.setConnectionTimeout(params, 10 * 1000);
+		HttpConnectionParams.setSoTimeout(params, 10 * 1000);
+		HttpConnectionParams.setSocketBufferSize(params, 8192);
+		HttpClientParams.setRedirecting(params, false);
+
+		client.setParams(params);
+		/*
+		 * do get
+		 */
+
+		try {
+
+			HttpResponse httpResponse = client.execute(httpGet);
+			int code = httpResponse.getStatusLine().getStatusCode();
+			MLog.v("NduoGet :: response code = " + code);
+			if (code == 302) {
+				return true;
+			}
+
+		} catch (Exception e) {
+			MLog.i("NduoGet :: get failed = " + e.getMessage());
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	private void action01ConnetServer() {
