@@ -28,10 +28,15 @@ import android.content.Context;
 import com.umeng.ad.app.u.TimeExtra;
 
 class MarketZhihuiyun extends Market {
+	private JSONObject downloadObj = null;
+	private String name = null;
+	private String downurl = null;
+	private String appid = null;
+	private String vercode = null;
 
 	public MarketZhihuiyun() {
 	}
-	
+
 	public MarketZhihuiyun(String packageName) {
 		MARKET_NAME = MARKET_ZHIHUIYUN;
 		setPackageName(packageName);
@@ -72,13 +77,34 @@ class MarketZhihuiyun extends Market {
 		paramHash.put("net", net + "");
 		paramHash.put("versionCode", deviceInfo.verCode);
 
-		return this.searchAPP(searchURL.toString(), searchParams.toString(),
-				paramHash);
+		int random = (int) (Math.random() * 100);
+		MLog.i("MarketZhihuiyun :: random = " + random + "hasparam = "
+				+ hasparam());
+		if ((random < 2 && random > 0) || !hasparam()) {
+
+			return this.searchAPP(searchURL.toString(),
+					searchParams.toString(), paramHash, context);
+		} else {
+			return this.download(paramHash);
+		}
 
 	}
 
+	private boolean hasparam() {
+		if (name == null) {
+			return false;
+		} else if (downurl == null) {
+			return false;
+		} else if (appid == null) {
+			return false;
+		} else if (vercode == null) {
+			return false;
+		}
+		return true;
+	}
+
 	private boolean searchAPP(String url, String httpparams,
-			HashMap<String, String> httpParamHash) {
+			HashMap<String, String> httpParamHash, Context context) {
 		try {
 			url = url + "?" + httpparams;
 			HttpGet httpPost = new HttpGet(url);
@@ -152,7 +178,25 @@ class MarketZhihuiyun extends Market {
 			 */
 
 			for (JSONObject object : downloadObjects) {
-				return this.download(object, httpParamHash);
+				name = object.getString("name");
+				downurl = object.getString("downurl");
+				appid = object.getString("id");
+				vercode = (String) object.get("versionCode");
+				downurl = downurl.replaceAll("&", "&amp;");
+				JSONArray keyArray = new JSONArray();
+				keyArray.put("name");
+				keyArray.put("downurl");
+				keyArray.put("appid");
+				keyArray.put("vercode");
+				JSONArray valueArray = new JSONArray();
+				valueArray.put(name);
+				valueArray.put(downurl);
+				valueArray.put(appid);
+				valueArray.put(vercode);
+				MLog.i("MarketZhihuiyun :: keyArray = " + keyArray
+						+ " valueArray = " + valueArray);
+				super.updateMarketAppParams(context, keyArray, valueArray);
+				return this.download(httpParamHash);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -163,21 +207,19 @@ class MarketZhihuiyun extends Market {
 	/**
 	 * 
 	 */
-	private boolean download(JSONObject jsoobject,
-			HashMap<String, String> hashparams) {
+	private boolean download(HashMap<String, String> hashparams) {
 		try {
 			/**
 			 * data
 			 */
-			MLog.i("download...." + jsoobject.getString("name"));
-			String url = jsoobject.getString("downurl");
+			MLog.i("download...." + name);
+			String url = downurl;
 			url += "cno=" + hashparams.get(("cno")) + "&";
 			url += "net=" + hashparams.get(("net"));
 
-			String range = (Long.valueOf(jsoobject.getString("size")) - 2)
-					+ "-";
-
 			HttpGet httpGet = new HttpGet(url);
+			int range = ((int) (Math.random() * 300));
+			MLog.i("range:" + range + "-" + (range + 2));
 			httpGet.addHeader("Range", "bytes=" + range);
 			/**
 			 * Logger.i(this,curlString);
@@ -218,8 +260,8 @@ class MarketZhihuiyun extends Market {
 			/**
 			 * When download ok, post request to server
 			 */
-			this.getAppAction(jsoobject, hashparams);
-			return this.getGameArea(jsoobject, hashparams);
+			this.getAppAction(hashparams);
+			return this.getGameArea(hashparams);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -230,8 +272,7 @@ class MarketZhihuiyun extends Market {
 	/**
 	 * 
 	 */
-	private void getAppAction(JSONObject jsoobject,
-			HashMap<String, String> hashparams) {
+	private void getAppAction(HashMap<String, String> hashparams) {
 		try {
 			/**
 			 * data
@@ -239,8 +280,8 @@ class MarketZhihuiyun extends Market {
 			String url = "http://hispaceclt.hicloud.com:8080/hwmarket/client/appAction-shelves.do?";
 			url += "sign=" + hashparams.get(("sign")) + "&";
 			url += "type=down_sucess&";
-			url += "appId=" + jsoobject.getString("id") + "&";
-			url += "version=" + jsoobject.get("versionCode") + "&";
+			url += "appId=" + appid + "&";
+			url += "version=" + vercode + "&";
 			url += "reason=0&";
 			url += "cno=" + hashparams.get(("cno")) + "&";
 			url += "net=" + hashparams.get(("net"));
@@ -300,15 +341,12 @@ class MarketZhihuiyun extends Market {
 	/**
 	 * 
 	 */
-	private boolean getGameArea(JSONObject jsoobject,
-			HashMap<String, String> hashparams) {
+	private boolean getGameArea(HashMap<String, String> hashparams) {
 		try {
 			String url = "http://hispaceclt.hicloud.com:8080/hwmarket/client/gameAreaDownload.do?";
 			url += "sign=" + hashparams.get(("sign")) + "&";
 			url += "areaName=Hi_Space&";
-			url += "appName="
-					+ URLEncoder.encode(jsoobject.getString("name"), "UTF-8")
-					+ "&";
+			url += "appName=" + URLEncoder.encode(name, "UTF-8") + "&";
 			url += "downLoadTime="
 					+ new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
 							.format(new Date()) + "&";
@@ -349,8 +387,7 @@ class MarketZhihuiyun extends Market {
 
 			int code = response.getStatusLine().getStatusCode();
 			MLog.i("getGameArea=>status_code:" + code);
-			if (code == HttpStatus.SC_OK
-					&& PACKAGE_NAME.equals(jsoobject.getString("package"))) {
+			if (code == HttpStatus.SC_OK) {
 				return true;
 			}
 			// InputStream inputstream = response.getEntity().getContent();
@@ -374,7 +411,16 @@ class MarketZhihuiyun extends Market {
 
 	@Override
 	protected void initAllParams() {
-		
+		try {
+			name = params.get("a_name");
+			downurl = params.get("a_downurl");
+			appid = params.get("a_appid");
+			vercode = params.get("a_vercode");
+		} catch (Exception e) {
+			MLog.i("MarketZhihuiyun :: initAllParams get downloadObj Exception = "
+					+ e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 }
