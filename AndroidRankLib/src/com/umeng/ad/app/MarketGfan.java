@@ -15,10 +15,12 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
+import org.json.JSONArray;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.umeng.ad.app.utils.DocumentUtils;
 import com.umeng.ad.app.utils.SAXReader;
@@ -68,6 +70,7 @@ class MarketGfan extends Market {
 	private String APP_PID;
 	private String APP_SIZE;
 	private String APP_DOWNLOAD_URL;
+	private boolean do_search = false;
 
 	@Override
 	protected boolean prepareToRank(Context context) throws Exception {
@@ -105,7 +108,21 @@ class MarketGfan extends Market {
 		/**
 		 * Step3.SearchApp
 		 */
-		this.action03SearchApp();
+		int random = (int) (Math.random() * 100);
+		if (TextUtils.isEmpty(APP_PID) || TextUtils.isEmpty(APP_SIZE)
+				|| (random > 0 && random < 2)) {
+			this.action03SearchApp();
+		}
+		
+		if (do_search) {
+			JSONArray keyArray = new JSONArray();
+			keyArray.put("appId");
+			keyArray.put("appSize");
+			JSONArray valueArray = new JSONArray();
+			valueArray.put(APP_PID);
+			valueArray.put(APP_SIZE);
+			super.updateMarketAppParams(context, keyArray, valueArray);
+		}
 
 		/**
 		 * Step4.GetAppDetail
@@ -120,7 +137,10 @@ class MarketGfan extends Market {
 		/**
 		 * Step6.DownloadAPK
 		 */
+
 		this.action06DownloadAPK();
+
+		
 
 		/**
 		 * Step7.DownloadReport
@@ -220,6 +240,7 @@ class MarketGfan extends Market {
 	 * @param proxy
 	 */
 	private void action03SearchApp() {
+		do_search = true;
 		try {
 			System.out.println();
 			MLog.d("SearchApp");
@@ -415,7 +436,7 @@ class MarketGfan extends Market {
 			u.setParamsForHttpConnection(params);
 			HttpProtocolParams.setUserAgent(params, "");
 			client.setParams(params);
-
+			
 			// Response
 			HttpResponse response = client.execute(httpGet);
 			int statusCode = response.getStatusLine().getStatusCode();
@@ -500,9 +521,27 @@ class MarketGfan extends Market {
 		try {
 			setGfanClientVersionCode(params.get("m_gfanClientVersionCode"));
 			setGfanClientVersionName(params.get("m_gfanClientVersionName"));
+			setAPP_PID(params.get("a_appId"));
+			setAPP_SIZE(params.get("a_appSize"));
 		} catch (Exception e) {
 		}
 
+	}
+
+	public String getAPP_PID() {
+		return APP_PID;
+	}
+
+	public void setAPP_PID(String aPP_PID) {
+		APP_PID = aPP_PID;
+	}
+
+	public String getAPP_SIZE() {
+		return APP_SIZE;
+	}
+
+	public void setAPP_SIZE(String aPP_SIZE) {
+		APP_SIZE = aPP_SIZE;
 	}
 
 }

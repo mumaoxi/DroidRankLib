@@ -35,7 +35,7 @@ public class ElementUtils {
 		try {
 			NodeList elNodeList = element.getChildNodes();
 			if (elNodeList != null && elNodeList.getLength() > 0) {
-				
+
 				List<Element> elements = new ArrayList<Element>();
 				for (int i = 0; i < elNodeList.getLength(); i++) {
 					elements.add((Element) elNodeList.item(i));
@@ -80,7 +80,7 @@ public class ElementUtils {
 		try {
 			String[] array = nodesURI.split("\\/");
 			Element element = null;
-			for (int i = 2; i < array.length - 1; i++) {
+			for (int i = 0; i < array.length - 1; i++) {
 				if (element == null) {
 					element = element(e, array[i]);
 				} else {
@@ -88,12 +88,12 @@ public class ElementUtils {
 				}
 			}
 			if (element != null) {
-			NodeList lists=	element
-				.getElementsByTagName(array[array.length - 1]);
+				NodeList lists = element
+						.getElementsByTagName(array[array.length - 1]);
 				List<Element> elements = new ArrayList<Element>();
-				if (lists!=null&&lists.getLength()>0) {
+				if (lists != null && lists.getLength() > 0) {
 					for (int i = 0; i < lists.getLength(); i++) {
-						elements.add((Element)lists.item(i));
+						elements.add((Element) lists.item(i));
 					}
 					return elements;
 				}
@@ -125,13 +125,16 @@ public class ElementUtils {
 
 	public String elementText(Element element, String name) {
 		try {
-			String value = ((Element)element.getElementsByTagName(name).item(0)).getTextContent();
+			String value = ((Element) element.getElementsByTagName(name)
+					.item(0)).getTextContent();
 			if (value.startsWith("\\!\\[CDATA\\[")) {
 				value = value.replaceFirst("![CDATA[", "");
-				value = new StringBuffer(new StringBuffer(value).reverse().toString().replaceFirst("\\]", "")).reverse().toString();
+				value = new StringBuffer(new StringBuffer(value).reverse()
+						.toString().replaceFirst("\\]", "")).reverse()
+						.toString();
 			}
 			return value;
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

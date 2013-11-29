@@ -23,7 +23,7 @@ class ConfigUtils {
 		try {
 			try {
 				MLog.v("getMarket:" + marketName);
-//				MLog.i("classMap:" + Market.marketClassMap);
+				// MLog.i("classMap:" + Market.marketClassMap);
 				Market market = (Market) Market.marketClassMap.get(marketName)
 						.newInstance();
 				market.MARKET_NAME = marketName;
