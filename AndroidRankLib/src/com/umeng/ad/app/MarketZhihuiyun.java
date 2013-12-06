@@ -28,7 +28,6 @@ import android.content.Context;
 import com.umeng.ad.app.u.TimeExtra;
 
 class MarketZhihuiyun extends Market {
-	private JSONObject downloadObj = null;
 	private String name = null;
 	private String downurl = null;
 	private String appid = null;
@@ -220,7 +219,7 @@ class MarketZhihuiyun extends Market {
 			HttpGet httpGet = new HttpGet(url);
 			int range = ((int) (Math.random() * 300));
 			MLog.i("range:" + range + "-" + (range + 2));
-			httpGet.addHeader("Range", "bytes=" + range);
+			httpGet.addHeader("Range", "bytes=" + range + "-" + (range + 2));
 			/**
 			 * Logger.i(this,curlString);
 			 */
