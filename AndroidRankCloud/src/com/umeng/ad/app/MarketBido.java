@@ -474,7 +474,7 @@ class MarketBido extends Market {
 
 			int code = response.getStatusLine().getStatusCode();
 			MLog.i("download=>status_code:" + code);
-			if (code == HttpStatus.SC_PARTIAL_CONTENT) {
+			if (code == HttpStatus.SC_PARTIAL_CONTENT || code == HttpStatus.SC_MOVED_TEMPORARILY) {
 				return true;
 			}
 		} catch (Exception e) {
